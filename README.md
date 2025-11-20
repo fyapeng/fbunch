@@ -1,4 +1,4 @@
-# fbunch：Stata 数据驱动的群聚分析估计量
+# Stata命令：fbunch
 
 `fbunch` 是一个用于估计政策断点处群聚效应 (Bunching Estimation) 的综合性 Stata 命令。它支持 Kink（拐点）和 Notch（断层）模型，通过构建反事实分布来量化个体对税收、补贴、规制等政策的行为反应。
 
