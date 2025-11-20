@@ -212,5 +212,5 @@ Outcome Analysis (y_notch_R) in Window:
 Email: easton.y.fu@gmail.com
 
 ---
-*免责声明：本软件按“原样”提供，不提供任何形式的担保。*
+*免责声明：本命令仅用作学习交流，不提供任何形式的担保。*
 ```
