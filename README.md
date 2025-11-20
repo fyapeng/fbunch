@@ -80,7 +80,7 @@ fbunch income, cutoff(10000) outcome(hours) reps(500)
 ## Stata 示例
 运行文件`fbunch_example.do`可以得到三个示例结果
 
-### 1. Kink 点
+### 1. Kink点
 
 运行以下命令：
 
@@ -94,7 +94,6 @@ Stata 输出结果：
 ```text
 Auto-selected bin width: 200
 Running Bootstrap (100 reps)... 
-(file C:\Users\ENAN\AppData\Local\Temp\ST_12c_000005.tmp not found)
 .. Done.
 
 ------------------------------------------------------------------------
@@ -117,6 +116,87 @@ Outcome Analysis (y_kink) in Window:
 
 ```
 ![alt text](images/res_kink.png)
+
+### 2. Notch点+左侧群聚
+
+运行以下命令：
+
+```stata
+fbunch z_notch_L, cutoff(10000)  model(notch) side(left) ///
+    select(cv) constraint maxdeg(5) outcome(y_notch_L) reps(100)
+```
+
+Stata 输出结果：
+
+```text
+Auto-selected bin width: 238.26
+Running Bootstrap (100 reps)... 
+.. Done.
+
+------------------------------------------------------------------------
+Bunching  RESULTS: 
+Model: NOTCH (LEFT)                         Total Obs:       190350
+------------------------------------------------------------------------
+Parameters:
+  Bin Width       :    238.26               Poly Deg   : 5 (cv)
+  Excluded Window : [   -476.5,    1429.6]
+  Constraint      : On (B=M)
+------------------------------------------------------------------------
+Density Estimates:
+  Excess Mass (B)   :     17289             (SE:     385.8)
+  Standard b (B/h0) :     4.613             (SE:     0.102)
+  Relative b (B/Sum):    229.24%            (SE:      5.06%)
+  Net Balance (B-M) :       804             (SE:     757.3)
+  H0: B=M (p-value) :     0.288             (Accept H0)
+------------------------------------------------------------------------
+Outcome Analysis (y_notch_L) in Window:
+  Avg Change (Y)    :   -63.409             (SE:     1.383)
+  Relative Impact   :     -7.73%            (SE:      2.69%)
+------------------------------------------------------------------------
+
+```
+![alt text](images/res_notch_L.png)
+
+### 3. Notch点+右侧群聚
+
+运行以下命令：
+
+```stata
+fbunch z_notch_R, cutoff(10000) model(notch) side(right) ///
+    select(cv) constraint maxdeg(5) outcome(y_notch_R) reps(100)
+```
+
+Stata 输出结果：
+
+```text
+Auto-selected bin width: 238.4
+Running Bootstrap (100 reps)... 
+.. Done.
+
+------------------------------------------------------------------------
+Bunching  RESULTS: 
+Model: NOTCH (RIGHT)                        Total Obs:       190359
+------------------------------------------------------------------------
+Parameters:
+  Bin Width       :    238.40               Poly Deg   : 5 (cv)
+  Excluded Window : [  -1668.8,     476.8]
+  Constraint      : On (B=M)
+------------------------------------------------------------------------
+Density Estimates:
+  Excess Mass (B)   :     18712             (SE:     274.9)
+  Standard b (B/h0) :     4.977             (SE:     0.073)
+  Relative b (B/Sum):    250.81%            (SE:      3.67%)
+  Net Balance (B-M) :       500             (SE:     610.4)
+  H0: B=M (p-value) :     0.413             (Accept H0)
+------------------------------------------------------------------------
+Outcome Analysis (y_notch_R) in Window:
+  Avg Change (Y)    :    -6.167             (SE:     1.193)
+  Relative Impact   :      0.38%            (SE:      1.81%)
+------------------------------------------------------------------------
+
+```
+![alt text](images/res_notch_R.png)
+
 
 ## 参考文献 (References)
 
