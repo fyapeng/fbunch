@@ -77,6 +77,47 @@ fbunch income, cutoff(10000) outcome(hours) reps(500)
 - **Standard b (B/h0)**：归一化群聚量（用于计算弹性）。
 - **Average Impact**：结果变量的平均因果变化。
 
+## Stata 示例
+运行文件`fbunch_example.do`可以得到三个示例结果
+
+### 1. Kink 点
+
+运行以下命令：
+
+```stata
+fbunch z_kink, cutoff(10000) width(200) model(kink) side(left) ///
+    select(cv) outcome(y_kink) reps(100)
+```
+
+Stata 输出结果：
+
+```text
+Auto-selected bin width: 200
+Running Bootstrap (100 reps)... 
+(file C:\Users\ENAN\AppData\Local\Temp\ST_12c_000005.tmp not found)
+.. Done.
+
+------------------------------------------------------------------------
+Bunching  RESULTS: 
+Model: KINK (LEFT)                          Total Obs:       198062
+------------------------------------------------------------------------
+Parameters:
+  Bin Width       :    200.00               Poly Deg   : 7 (cv)
+  Excluded Window : [   -200.0,    4400.0]
+------------------------------------------------------------------------
+Density Estimates:
+  Excess Mass (B)   :       454             (SE:      56.1)
+  Standard b (B/h0) :     0.141             (SE:     0.017)
+  Relative b (B/Sum):     14.01%            (SE:      1.73%)
+------------------------------------------------------------------------
+Outcome Analysis (y_kink) in Window:
+  Avg Change (Y)    :    10.438             (SE:     4.507)
+  Relative Impact   :     37.34%            (SE:      0.93%)
+------------------------------------------------------------------------
+
+```
+![alt text](images/res_kink.png)
+
 ## 参考文献 (References)
 
 本命令的算法实现基于以下文献：
