@@ -1,0 +1,20 @@
+v 3
+d fbunch. Data-driven Bunching Estimator for Kinks and Notches.
+d Program to estimate bunching responses using polynomial fitting,
+d checking for integration constraints, and estimating outcome responses.
+d
+d KW: bunching
+d KW: kink
+d KW: notch
+d KW: public finance
+d KW: causal inference
+d
+d Requires: Stata version 14
+d
+d Distribution-Date: 20251121
+d
+d Author: Easton Y. Fu
+d Email: easton.y.fu@gmail.com
+d
+f fbunch.ado
+f fbunch.sthlp
