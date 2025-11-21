@@ -1,18 +1,16 @@
-# Stata命令：fbunch
-
 `fbunch` 是一个用于估计政策断点处群聚效应 (Bunching Estimation) 的综合性 Stata 命令。它支持 Kink（拐点）和 Notch（断层）模型，通过构建反事实分布来量化个体对税收、补贴、规制等政策的行为反应。
 
-与传统方法不同，`fbunch` 采用**完全数据驱动 (Data-driven)** 的算法来自动选择最优参数，确保了估计结果的稳健性和可复现性。
+与传统依赖“肉眼观察”的方法不同，`fbunch` 采用 **完全数据驱动 (Data-driven)** 与 **联合判定 (Joint Determination)** 算法，自动选择最优参数，确保了估计结果的稳健性、客观性和可复现性。
 
 ## 主要功能 (Features)
 
-- **完全数据驱动**：不再依赖肉眼观察，自动选择最优的分箱宽度 (Bin Width)、多项式阶数 (Degree) 和排除窗口 (Excluded Window)。
-- **联合判定算法**：采用迭代逻辑，同时确定最优的多项式阶数和窗口范围 (参考 Bosch et al., 2020)。
+- **完全数据驱动**：不再依赖主观判断，自动选择最优的分箱宽度 (Bin Width)、多项式阶数 (Degree) 和排除窗口 (Excluded Window)。
+- **联合判定算法**：采用严谨的双重迭代逻辑，**同时**确定最优的多项式阶数和窗口范围，解决了阶数与窗口选择的内生性问题。
 - **模型支持**：
   - **Kink**：边际激励变化（如累进税率）。
   - **Notch**：平均激励跳跃（如全额征收），支持 **B=M 积分约束** 的全局搜索求解。
-- **因果推断**：支持 **结果变量 (Outcome Response)** 分析，估算其他经济变量（如工时、税负、合规度）在断点处的平均因果变化。
-- **严谨推断**：支持 **Residual Bootstrap**，可自动计算密度群聚量和结果变量效应的标准误，并提供 Notch 模型的 B=M 假设检验。
+- **因果推断**：支持 **结果变量 (Outcome Response)** 分析，估算其他经济变量（如工时、税负、合规度）在断点处的**平均因果变化**。
+- **严谨推断**：支持 **Residual Bootstrap**，自动计算密度群聚量和结果变量效应的标准误，并提供 Notch 模型的 B=M 假设检验。
 
 ## 安装方法 (Installation)
 
@@ -38,173 +36,73 @@ fbunch depvar, cutoff(#) [options]
 | `width(#)` | 分箱宽度。若不指定，默认基于 Freedman-Diaconis 准则自动计算。 |
 | `model(str)` | 模型类型：`kink` (默认) 或 `notch`。 |
 | `side(str)` | 群聚方向：`left` (默认，如税收断点) 或 `right` (如补贴门槛)。 |
-| `select(str)` | 多项式阶数选择标准：`aic` (默认), `bic`, 或 `cv` (5折交叉验证)。 |
+| `select(str)` | 多项式阶数选择标准：`mse` (默认), `aic`, 或 `bic`。均基于 5折交叉验证计算。 |
+| `improve(#)` | 阶数选择的“肘部法则”阈值 (默认 0.05)，防止高阶过拟合。 |
 | `constraint` | 仅用于 Notch。强制执行 B=M 积分约束，通过全局搜索寻找最优窗口。 |
-| `outcome(var)` | 指定一个结果变量，计算该变量在断点处的因果效应。 |
+| `outcome(var)` | 指定一个结果变量，计算该变量在断点处的**平均因果效应**。 |
 | `reps(#)` | Bootstrap 重抽样次数 (建议 500)，用于计算标准误。 |
 
-## 使用示例 (Examples)
+## 统计原理 (Methods)
 
-### 1. 基础 Kink 估计
-使用交叉验证 (CV) 自动选择阶数，估计断点为 10,000 处的群聚效应：
+1.  **联合判定算法 (Joint Determination)**：
+    程序采用两阶段迭代算法。在每一次尝试扩张窗口时，都会基于当前的非排除样本重新运行模型选择算法（AIC/BIC/CV），确定当前最优的多项式阶数。窗口仅在观测值显著偏离预测值（统计显著 + 经济显著）且符合理论方向（凸起/凹陷）时才继续扩张。
 
-```stata
-fbunch income, cutoff(10000) width(200) select(cv)
-```
+2.  **结果变量分析 (Outcome Response)**：
+    为了避免因群聚导致的总人数变化干扰效应判断，本程序报告的是 **平均处理效应 (Average Treatment Effect)**：
+    $$ \Delta \bar{Y} = Avg(Y_{obs}) - Avg(Y_{cf}) $$
+    相对效应 (Relative Impact) 亦基于平均值计算。
 
-### 2. Notch 估计 (带约束)
-估计左侧群聚的 Notch 模型，并强制要求满足 "群聚量(B) = 缺失量(M)" 的理论约束：
+## Stata 示例 (Examples)
 
-```stata
-fbunch income, cutoff(10000) model(notch) side(left) constraint
-```
+以下示例基于 `fbunch_example.do` 生成的模拟数据，展示了三种典型场景。
 
-### 3. 结果变量与因果推断 (全功能)
-同时分析收入的群聚分布，以及 **工时 (hours)** 在断点处受到的因果影响，并使用 500 次 Bootstrap 计算标准误：
+### 1. Kink 模型 (拐点)
+*场景：累进税率导致高收入者向断点处聚集，且结果变量（如纳税遵从度）在断点处凸起。*
 
 ```stata
-fbunch income, cutoff(10000) outcome(hours) reps(500)
+* 使用 AIC 标准，并计算 Outcome 效应
+fbunch z_kink, cutoff(10000) width(200) select(aic) improve(0.02) outcome(y_kink) reps(500)
 ```
 
-## 输出结果 (Outputs)
+**输出结果可视化：**
+![Kink Result](images/res_kink.png)
 
-`fbunch` 会自动生成可视化图表：
-1.  **密度分布图**：展示实际频数分布与拟合的反事实曲线。
-2.  **结果变量图** (若指定 `outcome`)：展示结果变量均值的实际分布与反事实趋势。
+---
 
-并在 Stata 窗口输出详细统计量：
-- **Excess Mass (B)**：绝对群聚量。
-- **Standard b (B/h0)**：归一化群聚量（用于计算弹性）。
-- **Average Impact**：结果变量的平均因果变化。
-
-## Stata 示例
-运行文件`fbunch_example.do`可以得到三个示例结果
-
-### 1. Kink点
-
-运行以下命令：
+### 2. Notch 模型 (左侧群聚)
+*场景：税收断层导致断点右侧出现空洞，左侧出现堆积。强制执行 B=M 约束。*
 
 ```stata
-fbunch z_kink, cutoff(10000) width(200) model(kink) side(left) ///
-    select(cv) outcome(y_kink) reps(100)
+* 使用 BIC 标准防止过拟合，开启 B=M 约束
+fbunch z_notch_L, cutoff(10000) model(notch) select(bic) reps(500) constraint outcome(y_notch_L) improve(0.02)
 ```
 
-Stata 输出结果：
+**输出结果可视化：**
+![Notch Left Result](images/res_notch_L.png)
 
-```text
-Auto-selected bin width: 200
-Running Bootstrap (100 reps)... 
-.. Done.
+---
 
-------------------------------------------------------------------------
-Bunching  RESULTS: 
-Model: KINK (LEFT)                          Total Obs:       198062
-------------------------------------------------------------------------
-Parameters:
-  Bin Width       :    200.00               Poly Deg   : 7 (cv)
-  Excluded Window : [   -200.0,    4400.0]
-------------------------------------------------------------------------
-Density Estimates:
-  Excess Mass (B)   :       454             (SE:      56.1)
-  Standard b (B/h0) :     0.141             (SE:     0.017)
-  Relative b (B/Sum):     14.01%            (SE:      1.73%)
-------------------------------------------------------------------------
-Outcome Analysis (y_kink) in Window:
-  Avg Change (Y)    :    10.438             (SE:     4.507)
-  Relative Impact   :     37.34%            (SE:      0.93%)
-------------------------------------------------------------------------
-
-```
-![alt text](images/res_kink.png)
-
-### 2. Notch点+左侧群聚
-
-运行以下命令：
+### 3. Notch 模型 (右侧群聚)
+*场景：补贴门槛导致断点左侧出现空洞，右侧出现堆积。*
 
 ```stata
-fbunch z_notch_L, cutoff(10000)  model(notch) side(left) ///
-    select(cv) constraint maxdeg(5) outcome(y_notch_L) reps(100)
+* 指定 side(right)，使用 MSE 标准
+fbunch z_notch_R, cutoff(10000) model(notch) select(mse) side(right) ///
+	constraint outcome(y_notch_R) reps(500)
 ```
 
-Stata 输出结果：
-
-```text
-Auto-selected bin width: 238.26
-Running Bootstrap (100 reps)... 
-.. Done.
-
-------------------------------------------------------------------------
-Bunching  RESULTS: 
-Model: NOTCH (LEFT)                         Total Obs:       190350
-------------------------------------------------------------------------
-Parameters:
-  Bin Width       :    238.26               Poly Deg   : 5 (cv)
-  Excluded Window : [   -476.5,    1429.6]
-  Constraint      : On (B=M)
-------------------------------------------------------------------------
-Density Estimates:
-  Excess Mass (B)   :     17289             (SE:     385.8)
-  Standard b (B/h0) :     4.613             (SE:     0.102)
-  Relative b (B/Sum):    229.24%            (SE:      5.06%)
-  Net Balance (B-M) :       804             (SE:     757.3)
-  H0: B=M (p-value) :     0.288             (Accept H0)
-------------------------------------------------------------------------
-Outcome Analysis (y_notch_L) in Window:
-  Avg Change (Y)    :   -63.409             (SE:     1.383)
-  Relative Impact   :     -7.73%            (SE:      2.69%)
-------------------------------------------------------------------------
-
-```
-![alt text](images/res_notch_L.png)
-
-### 3. Notch点+右侧群聚
-
-运行以下命令：
-
-```stata
-fbunch z_notch_R, cutoff(10000) model(notch) side(right) ///
-    select(cv) constraint maxdeg(5) outcome(y_notch_R) reps(100)
-```
-
-Stata 输出结果：
-
-```text
-Auto-selected bin width: 238.4
-Running Bootstrap (100 reps)... 
-.. Done.
-
-------------------------------------------------------------------------
-Bunching  RESULTS: 
-Model: NOTCH (RIGHT)                        Total Obs:       190359
-------------------------------------------------------------------------
-Parameters:
-  Bin Width       :    238.40               Poly Deg   : 5 (cv)
-  Excluded Window : [  -1668.8,     476.8]
-  Constraint      : On (B=M)
-------------------------------------------------------------------------
-Density Estimates:
-  Excess Mass (B)   :     18712             (SE:     274.9)
-  Standard b (B/h0) :     4.977             (SE:     0.073)
-  Relative b (B/Sum):    250.81%            (SE:      3.67%)
-  Net Balance (B-M) :       500             (SE:     610.4)
-  H0: B=M (p-value) :     0.413             (Accept H0)
-------------------------------------------------------------------------
-Outcome Analysis (y_notch_R) in Window:
-  Avg Change (Y)    :    -6.167             (SE:     1.193)
-  Relative Impact   :      0.38%            (SE:      1.81%)
-------------------------------------------------------------------------
-
-```
-![alt text](images/res_notch_R.png)
-
+**输出结果可视化：**
+![Notch Right Result](images/res_notch_R.png)
 
 ## 参考文献 (References)
 
-本命令的算法实现基于以下文献：
+本命令的算法实现基于以下经典文献及最新方法论：
 
-- **Chetty, R., et al. (2011).** "Adjustment Costs, Firm Responses, and Micro vs. Macro Labor Supply Elasticities." *The Quarterly Journal of Economics*.
-- **Kleven, H. J., & Waseem, M. (2013).** "Using Notches to Uncover Optimization Frictions and Structural Elasticities." *The Quarterly Journal of Economics*.
 - **Bosch, N., Dekker, V., & Strohmaier, K. (2020).** "A data-driven procedure to determine the bunching window." *International Tax and Public Finance*.
+- **Chetty, R., et al. (2011).** "Adjustment Costs, Firm Responses, and Micro vs. Macro Labor Supply Elasticities." *The Quarterly Journal of Economics*.
+- **Kleven, H. J. (2016).** "Bunching." *Annual Review of Economics*
+- **Kleven, H. J., & Waseem, M. (2013).** "Using Notches to Uncover Optimization Frictions and Structural Elasticities." *The Quarterly Journal of Economics*.
+- **Saez, E. (2010).** "Do Taxpayers Bunch at Kink Points?" *American Economic Journal: Economic Policy*
 
 ## 作者 (Author)
 
@@ -212,5 +110,5 @@ Outcome Analysis (y_notch_R) in Window:
 Email: easton.y.fu@gmail.com
 
 ---
-*免责声明：本命令仅用作学习交流，不提供任何形式的担保。*
+*Disclaimer: This software is provided "as is", without warranty of any kind.*
 ```
