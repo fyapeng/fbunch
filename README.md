@@ -18,6 +18,8 @@
 
 您可以直接通过 Stata 从 GitHub 安装此命令：
 
+**项目主页与源码：** [https://github.com/fyapeng/fbunch](https://github.com/fyapeng/fbunch)
+
 ```stata
 net install fbunch, from("https://raw.githubusercontent.com/fyapeng/fbunch/main") replace
 ```
