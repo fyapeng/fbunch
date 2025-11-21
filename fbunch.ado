@@ -1,6 +1,6 @@
-*! version 15.0  Date: 2025-11-21
-*! Title: fbunch - The Ultimate Bunching Estimator (Mean Outcome Edition)
-*! Update: Report Total Obs, Calculate Average Outcome Effect (LATE), Relative Impact %
+*! version 17.0  Date: 2025-11-21
+*! Title: fbunch - The Ultimate Bunching Estimator (Consistent Outcome Edition)
+*! Update: Relative Impact is now based on Average Y to ensure sign consistency.
 
 capture program drop fbunch
 program define fbunch, rclass
@@ -9,10 +9,9 @@ program define fbunch, rclass
         Width(real 0.0)     /// 自动分箱宽度
         Degree(int 0)       /// 多项式阶数
         Maxdeg(int 7)       /// 最大阶数
-        Select(string)      /// 选择标准: aic, bic, cv
+        Select(string)      /// 选择标准
         IMprove(real 0.05)  /// 肘部法则
         Window(numlist min=2 max=2) /// 手动窗口
-        Rough(real 0)       /// 粗略排除半径
         Model(string)       /// kink 或 notch
         Side(string)        /// left 或 right
         Constraint          /// B=M 约束
@@ -27,7 +26,7 @@ program define fbunch, rclass
 
     if "`model'" == "" local model "kink"
     if "`side'" == "" local side "left"
-    if "`select'" == "" local select "aic"
+    if "`select'" == "" local select "mse"
     if `seed' != 0 set seed `seed'
     
     tempfile data_collapsed data_main_results base_cf resid_pool bootsave curr_resid
@@ -36,7 +35,7 @@ program define fbunch, rclass
     * --- 1. 计算总样本数 & 自动分箱 ---
     quietly {
         summarize `varlist', detail
-        local total_N = r(N) // 获取总样本数
+        local total_N = r(N)
         
         if `width' == 0 {
             local iqr = r(p75) - r(p25)
@@ -73,18 +72,17 @@ program define fbunch, rclass
     * --- 3. 运行主估计 ---
     quietly _fbunch_core, cutoff(`cutoff') width(`width') ///
         degree(`degree') maxdeg(`maxdeg') select(`select') improve(`improve') ///
-        window(`window') rough(`rough') model(`model') side(`side') ///
+        window(`window') model(`model') side(`side') ///
         `constraint' searchrange(`searchrange') has_outcome("`outcome'") tolerance(`tolerance')
         
-    * 提取主结果
+    * 提取结果
     local B_main = r(B)
     local b_std_main = r(b_std)
     local b_pct_main = r(b_pct)
     local net_bal_main = r(net_bal)
     
-    * 提取 Outcome 结果
-    local diff_Y_avg_main = r(diff_Y_avg) // 平均效应
-    local diff_Y_pct_main = r(diff_Y_pct) // 相对效应
+    local diff_Y_avg_main = r(diff_Y_avg)
+    local diff_Y_pct_main = r(diff_Y_pct)
     local val_at_cut_main = r(val_at_cut)
     
     local opt_deg = r(deg)
@@ -142,7 +140,6 @@ program define fbunch, rclass
         }
         
         if `do_boot' {
-            * 更新 Postfile: 加入 outcome 的 avg 和 pct
             postfile `memhold' double(b_std_boot B_boot b_pct_boot net_boot diff_Y_avg_boot diff_Y_pct_boot) using `bootsave', replace
             
             forvalues i = 1/`reps' {
@@ -162,7 +159,6 @@ program define fbunch, rclass
                     
                     gen double freq_star = cf_freq + resid_freq
                     replace freq_star = 0 if freq_star < 0
-                    
                     gen double out_star = .
                     if "`outcome'" != "" {
                         replace out_star = cf_out_hat + resid_out
@@ -192,7 +188,6 @@ program define fbunch, rclass
                     sum diff_all_star if bin_center >= `win_l' & bin_center <= `win_r', meanonly
                     local net_star = r(sum)
                     
-                    * Outcome Bootstrap Calculation
                     local diff_Y_avg_star = .
                     local diff_Y_pct_star = .
                     
@@ -200,7 +195,6 @@ program define fbunch, rclass
                         reg out_star `poly_list' if bin_center < `win_l' | bin_center > `win_r'
                         predict double cf_out_star, xb
                         
-                        * 计算窗口内的各项总和
                         gen double Y_mass_obs = freq_star * out_star
                         gen double Y_mass_cf  = cf_star * cf_out_star
                         
@@ -217,11 +211,11 @@ program define fbunch, rclass
                         local sum_N_cf = r(sum)
                         if `sum_N_cf' <= 0 local sum_N_cf = 1e-6
                         
-                        * 均值差异
-                        local diff_Y_avg_star = (`sum_Y_obs' / `sum_N_obs') - (`sum_Y_cf' / `sum_N_cf')
+                        local avg_obs = `sum_Y_obs' / `sum_N_obs'
+                        local avg_cf  = `sum_Y_cf' / `sum_N_cf'
                         
-                        * 相对差异 (Total Diff / Total Counterfactual)
-                        local diff_Y_pct_star = ((`sum_Y_obs' - `sum_Y_cf') / `sum_Y_cf') * 100
+                        local diff_Y_avg_star = `avg_obs' - `avg_cf'
+                        local diff_Y_pct_star = ((`avg_obs' - `avg_cf') / `avg_cf') * 100
                     }
                     
                     post `memhold' (`b_std_star') (`B_star') (`b_pct_star') (`net_star') (`diff_Y_avg_star') (`diff_Y_pct_star')
@@ -263,9 +257,9 @@ program define fbunch, rclass
 
     quietly use `data_main_results', clear
 
-    * --- 5. 结果输出 (优化版) ---
+    * --- 5. 结果输出 ---
     di _n as txt "{hline 72}"
-    di as txt "Bunching  RESULTS: " 
+    di as txt "FBunch Results: "
     di as txt "Model: " as res upper("`model'") " (" upper("`side'") ")" _col(45) as txt "Total Obs: " as res %12.0f `total_N'
     di as txt "{hline 72}"
     di as txt "Parameters:"
@@ -280,7 +274,7 @@ program define fbunch, rclass
     
     if "`model'" == "notch" {
         di as txt "  Net Balance (B-M) : " as res %9.0f `net_bal_main' _col(45) as txt "(SE: " as res %9.1f `se_net' as txt ")"
-        di as txt "  H0: B=M (p-value) : " as res %9.3f `p_val' _col(45) as txt cond(`p_val'<0.05, "* Reject H0 *", "(Accept H0)")
+        di as txt "  H0: B=M (p-value) : " as res %9.3f `p_val' _col(45) as txt cond(`p_val'<0.05, "* Reject H0 *", "(Not Reject H0)")
     }
     
     if "`outcome'" != "" {
@@ -291,7 +285,6 @@ program define fbunch, rclass
     }
     di as txt "{hline 72}"
 
-    * Returns
     return scalar b_std = `b_std_main'
     return scalar B = `B_main'
     return scalar se_b = `se_b_std'
@@ -322,7 +315,7 @@ end
 * ==============================================================================
 capture program drop _fbunch_core
 program define _fbunch_core, rclass
-    syntax, Cutoff(real) Width(real) [Degree(int 0) Maxdeg(int 7) Select(string) Improve(real 0.05) Window(string) Rough(real 0) Model(string) Side(string) Constraint Searchrange(real 0) has_outcome(string) Tolerance(real 0.02)]
+    syntax, Cutoff(real) Width(real) [Degree(int 0) Maxdeg(int 7) Select(string) Improve(real 0.05) Window(string) Model(string) Side(string) Constraint Searchrange(real 0) has_outcome(string) Tolerance(real 0.02)]
 
     forvalues p = 1/`maxdeg' {
         capture drop z_pow_`p'
@@ -497,7 +490,6 @@ program define _fbunch_core, rclass
         capture drop cf_out
         predict double cf_out, xb
         
-        * Weighted sums within window
         gen double Y_mass_obs = freq * out_mean
         gen double Y_mass_cf  = cf_freq * cf_out
         
@@ -514,11 +506,12 @@ program define _fbunch_core, rclass
         local sum_N_cf = r(sum)
         if `sum_N_cf' <= 0 local sum_N_cf = 1e-6
         
-        * Average Impact: (Avg Observed Y) - (Avg Counterfactual Y)
-        local diff_Y_avg = (`sum_Y_obs' / `sum_N_obs') - (`sum_Y_cf' / `sum_N_cf')
+        * 核心修复：改用平均值计算相对影响
+        local avg_obs = `sum_Y_obs' / `sum_N_obs'
+        local avg_cf  = `sum_Y_cf' / `sum_N_cf'
         
-        * Relative Impact: Total Diff / Total Counterfactual
-        local diff_Y_pct = ((`sum_Y_obs' - `sum_Y_cf') / `sum_Y_cf') * 100
+        local diff_Y_avg = `avg_obs' - `avg_cf'
+        local diff_Y_pct = ((`avg_obs' - `avg_cf') / `avg_cf') * 100
         
         sum out_mean if abs(bin_center) < `width', meanonly
         local val_at_cut = r(mean)
@@ -540,38 +533,41 @@ end
 capture program drop _fbunch_select_deg
 program define _fbunch_select_deg, rclass
     syntax, lower(real) upper(real) max(int) sel(string) imp(real)
-    if "`sel'" == "cv" {
-        tempvar cv_grp
-        gen `cv_grp' = ceil(runiform()*5) if bin_center < `lower' | bin_center > `upper'
-    }
+    
+    * CV 始终通过划分5折来实现
+    tempvar cv_grp
+    gen `cv_grp' = ceil(runiform()*5) if bin_center < `lower' | bin_center > `upper'
+    
     local best_deg = 1
     local prev_crit = .
+    
     forvalues p = 1/`max' {
         local vars ""
         forvalues k=1/`p' {
             local vars "`vars' z_pow_`k'"
         }
+        
+        * 计算 CV 预测误差 (PRESS)
+        local press = 0
+        forvalues k=1/5 {
+            quietly reg freq `vars' if `cv_grp'!=. & `cv_grp'!=`k'
+            tempvar p_cv
+            quietly predict double `p_cv' if `cv_grp'==`k'
+            quietly replace `p_cv' = (`p_cv' - freq)^2
+            quietly sum `p_cv', meanonly
+            local press = `press' + r(sum)
+            drop `p_cv'
+        }
+        
+        quietly count if bin_center < `lower' | bin_center > `upper'
+        local N_eff = r(N)
+        local k_param = `p' + 1
+        
         local crit = .
-        if "`sel'" == "cv" {
-            local mse = 0
-            forvalues k=1/5 {
-                quietly reg freq `vars' if `cv_grp'!=. & `cv_grp'!=`k'
-                tempvar p_cv
-                quietly predict double `p_cv' if `cv_grp'==`k'
-                quietly replace `p_cv' = (`p_cv' - freq)^2
-                quietly sum `p_cv', meanonly
-                local mse = `mse' + r(sum)
-                drop `p_cv'
-            }
-            local crit = `mse'
-        }
-        else {
-            quietly reg freq `vars' if bin_center < `lower' | bin_center > `upper'
-            local N = e(N)
-            local k = e(df_m) + 1
-            if "`sel'"=="aic" local crit = e(N)*ln(e(rss)/e(N)) + 2*`k'
-            else local crit = e(N)*ln(e(rss)/e(N)) + `k'*ln(e(N))
-        }
+        if "`sel'" == "mse" local crit = `press'
+        if "`sel'" == "aic" local crit = `N_eff' * ln(`press'/`N_eff') + 2 * `k_param'
+        if "`sel'" == "bic" local crit = `N_eff' * ln(`press'/`N_eff') + `k_param' * ln(`N_eff')
+        
         if `p' > 1 {
             local pct = (`prev_crit' - `crit') / abs(`prev_crit')
             if `pct' > `imp' local best_deg = `p'
@@ -589,16 +585,16 @@ program define _fbunch_plot
            (line cf_freq bin_center, color(maroon) lwidth(thick)), ///
            xline(`win_l' `win_r', lcolor(green) lpattern(dash)) ///
            xline(0, lcolor(black) lwidth(thin)) ///
-           legend(off) title("`tstr'") name(g_dens, replace) nodraw
+           legend(off) name(g_dens, replace) nodraw
     if "`has_outcome'" != "" {
         twoway (scatter out_mean bin_center, ms(Oh) mc(navy%60)) ///
                (line cf_out bin_center, color(maroon) lwidth(thick)), ///
                xline(`win_l' `win_r', lcolor(green) lpattern(dash)) ///
                xline(0, lcolor(black) lwidth(thin)) ///
-               legend(off) title("Mean Outcome") name(g_out, replace) nodraw
-        graph combine g_dens g_out, col(1) title("Bunching Analysis")
+               legend(off) name(g_out, replace) nodraw
+        graph combine g_dens g_out, col(1) ysize(8) xsize(6) imargin(small)
     }
     else {
-        graph display g_dens
+        graph display g_dens, ysize(5) xsize(6)
     }
 end
