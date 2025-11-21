@@ -47,10 +47,9 @@ keep if z_kink > 0 & z_kink < 25000
 
 * >>> 运行 fbunch 估计 <<<
 * 使用 CV (交叉验证) 选择阶数，计算 Outcome 效应
-fbunch z_kink, cutoff(10000) width(200) model(kink) side(left) ///
-    select(cv) outcome(y_kink) reps(100)
+fbunch z_kink, cutoff(10000) width(200) select(aic) improve(0.02) outcome(y_kink) reps(500)
 
-* 保存图片 (用于 GitHub README)
+* 保存图片
 graph export "res_kink.png", replace
 
 
@@ -85,8 +84,7 @@ keep if z_notch_L > 0 & z_notch_L < 25000
 
 * >>> 运行 fbunch 估计 <<<
 * 开启 constraint (B=M 约束) 和 maxdeg(5) 防止过拟合
-fbunch z_notch_L, cutoff(10000)  model(notch) side(left) ///
-    select(cv) constraint maxdeg(5) outcome(y_notch_L) reps(100)
+fbunch z_notch_L, cutoff(10000) model(notch) select(bic) reps(500) constraint outcome(y_notch_L) improve(0.02)
 
 * 保存图片
 graph export "res_notch_L.png", replace
@@ -123,8 +121,8 @@ keep if z_notch_R > 0 & z_notch_R < 25000
 
 * >>> 运行 fbunch 估计 <<<
 * 右侧群聚模式
-fbunch z_notch_R, cutoff(10000) model(notch) side(right) ///
-    select(cv) constraint maxdeg(5) outcome(y_notch_R) reps(100)
+fbunch z_notch_R, cutoff(10000) model(notch) select(mse) side(right) ///
+	constraint outcome(y_notch_R) reps(500)
 
 * 保存图片
 graph export "res_notch_R.png", replace
