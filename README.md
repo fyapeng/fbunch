@@ -107,7 +107,6 @@ fbunch z_notch_L, cutoff(10000) model(notch) select(bic) reps(500) constraint ou
 ```text
 Auto-selected bin width: 238.26
 Running Bootstrap (500 reps)... 
-(file C:\Users\ENAN\AppData\Local\Temp\ST_2ad4_000005.tmp not found)
 .......... Done.
 
 ------------------------------------------------------------------------
@@ -150,7 +149,6 @@ fbunch z_notch_R, cutoff(10000) model(notch) select(mse) side(right) ///
 ```text
 Auto-selected bin width: 238.4
 Running Bootstrap (500 reps)... 
-(file C:\Users\ENAN\AppData\Local\Temp\ST_2ad4_000005.tmp not found)
 .......... Done.
 
 ------------------------------------------------------------------------
@@ -195,5 +193,5 @@ Outcome Analysis (y_notch_R) in Window:
 Email: easton.y.fu@gmail.com
 
 ---
-*Disclaimer: This software is provided "as is", without warranty of any kind.*
+*本命令仅用作学习交流使用*
 ```
