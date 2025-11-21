@@ -193,4 +193,4 @@ Outcome Analysis (y_notch_R) in Window:
 Email: easton.y.fu@gmail.com
 
 ---
-*本命令仅用作学习交流使用*
+*© 2025 Easton. All Rights Reserved.*
