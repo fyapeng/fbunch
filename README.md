@@ -1,6 +1,6 @@
 `fbunch` 是一个用于估计政策断点处群聚效应 (Bunching Estimation) 的综合性 Stata 命令。它支持 Kink（拐点）和 Notch（断层）模型，通过构建反事实分布来量化个体对税收、补贴、规制等政策的行为反应。
 
-与传统依赖“肉眼观察”的方法不同，`fbunch` 采用 **完全数据驱动 (Data-driven)** 与 **联合判定 (Joint Determination)** 算法，自动选择最优参数，确保了估计结果的稳健性、客观性和可复现性。
+与传统依赖人为指定的方法不同，`fbunch` 采用 **完全数据驱动 (Data-driven)** 与 **联合判定 (Joint Determination)** 算法，自动选择最优参数，确保了估计结果的稳健性、客观性和可复现性。
 
 ## 主要功能 (Features)
 
@@ -45,11 +45,13 @@ fbunch depvar, cutoff(#) [options]
 ## 统计原理 (Methods)
 
 1.  **联合判定算法 (Joint Determination)**：
-    程序采用两阶段迭代算法。在每一次尝试扩张窗口时，都会基于当前的非排除样本重新运行模型选择算法（AIC/BIC/CV），确定当前最优的多项式阶数。窗口仅在观测值显著偏离预测值（统计显著 + 经济显著）且符合理论方向（凸起/凹陷）时才继续扩张。
+    程序采用两阶段迭代算法。在每一次尝试扩张窗口时，都会基于当前的非排除样本重新运行模型选择算法（MSE/AIC/BIC），确定当前最优的多项式阶数。窗口仅在观测值显著偏离预测值（统计显著 + 经济显著）且符合理论方向（凸起/凹陷）时才继续扩张。
 
 2.  **结果变量分析 (Outcome Response)**：
     为了避免因群聚导致的总人数变化干扰效应判断，本程序报告的是 **平均处理效应 (Average Treatment Effect)**：
-    $$ \Delta \bar{Y} = Avg(Y_{obs}) - Avg(Y_{cf}) $$
+    
+     $$ \Delta \bar{Y} = Avg(Y_{obs}) - Avg(Y_{cf}) $$
+    
     相对效应 (Relative Impact) 亦基于平均值计算。
 
 ## Stata 示例 (Examples)
@@ -89,6 +91,7 @@ Outcome Analysis (y_kink) in Window:
 ```
 
 **输出结果可视化：**
+
 ![Kink Result](images/res_kink.png)
 
 ---
@@ -130,6 +133,7 @@ Outcome Analysis (y_notch_L) in Window:
 ```
 
 **输出结果可视化：**
+
 ![Notch Left Result](images/res_notch_L.png)
 
 ---
@@ -172,6 +176,7 @@ Outcome Analysis (y_notch_R) in Window:
 ```
 
 **输出结果可视化：**
+
 ![Notch Right Result](images/res_notch_R.png)
 
 ## 参考文献 (References)
