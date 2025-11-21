@@ -55,9 +55,7 @@ fbunch depvar, cutoff(#) [options]
 3.  **结果变量分析 (Outcome Response)**：
     为了准确衡量因果效应，程序计算群聚窗口内结果变量的观测均值与反事实均值之差：
     
-     $$
-     \Delta \bar{Y} = Avg(Y_{obs}) - Avg(Y_{cf}) 
-     $$
+    $$\Delta \bar{Y} = Avg(Y_{obs}) - Avg(Y_{cf})$$
     
     反事实均值 $Avg(Y_{cf})$ 基于多项式拟合及 Balance 调整后的权重计算，确保了估计的一致性。
 
