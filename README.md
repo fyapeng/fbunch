@@ -48,7 +48,7 @@ fbunch depvar, cutoff(#) [options]
     程序采用两阶段迭代算法。在每一次尝试扩张窗口时，都会基于当前的非排除样本重新运行模型选择算法（MSE/AIC/BIC），确定当前最优的多项式阶数。窗口仅在观测值显著偏离预测值（统计显著 + 经济显著）且符合理论方向（凸起/凹陷）时才继续扩张。
 
 2.  **结果变量分析 (Outcome Response)**：
-    为了避免因群聚导致的总人数变化干扰效应判断，本程序报告的是 **平均处理效应 (Average Treatment Effect)**：
+    为了避免因群聚导致的总人数变化干扰效应判断，本程序报告的是 **平均意向处理效应 (Intention to treat)**：
     
      $$ \Delta \bar{Y} = Avg(Y_{obs}) - Avg(Y_{cf}) $$
     
