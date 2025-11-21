@@ -171,8 +171,7 @@ Outcome Analysis (y_notch_R) in Window:
 ------------------------------------------------------------------------
 ```
 
-
-![alt text](images/res_notch_L.png)
+![alt text](images/res_notch_R.png)
 
 ## 参考文献 (References)
 
