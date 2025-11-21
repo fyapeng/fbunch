@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 15.0  21Nov2025}{...}
+{* *! version 17.0  21Nov2025}{...}
 {vieweralsosee "reghdfe" "help reghdfe"}{...}
 {vieweralsosee "rdrobust" "help rdrobust"}{...}
 {viewerjumpto "语法 Syntax" "fbunch##syntax"}{...}
@@ -12,7 +12,7 @@
 {title:标题}
 
 {p2colset 5 18 20 2}{...}
-{p2col :{bf:fbunch} {hline 2}}基于数据驱动的群聚分析估计量 (Data-driven Bunching Estimator){p_end}
+{p2col :{bf:fbunch} {hline 2}}数据驱动的群聚分析估计量 (Data-driven Bunching Estimator){p_end}
 {p2colreset}{...}
 
 
@@ -38,8 +38,8 @@
 {syntab:参数自动选择}
 {synopt :{opt d:egree(#)}}多项式阶数 (0=自动选择){p_end}
 {synopt :{opt maxdeg(#)}}自动选择时的最大阶数 (默认 7){p_end}
-{synopt :{opt sel:ect(string)}}阶数选择标准: {bf:aic}, {bf:bic}, {bf:cv} (交叉验证){p_end}
-{synopt :{opt imp:rove(#)}}阶数选择的"肘部法则"阈值 (默认 0.05，即提升需>5%){p_end}
+{synopt :{opt sel:ect(string)}}阶数选择标准: {bf:mse} (默认), {bf:aic}, {bf:bic}。所有标准均基于 5折交叉验证计算。{p_end}
+{synopt :{opt imp:rove(#)}}阶数选择的“肘部法则”阈值 (默认 0.05，即提升需>5%)，如标准使用aic或bic可适当调低这一参数。{p_end}
 {synopt :{opt win:dow(numlist)}}手动指定排除窗口，例如 {opt window(-500 500)}{p_end}
 {synopt :{opt tol:erance(#)}}窗口搜索的相对偏差容忍度 (默认 0.02){p_end}
 
@@ -64,11 +64,11 @@
 
 {pstd}
 {cmd:fbunch} 是一个用于估计政策断点处群聚效应 (Bunching Estimation) 的综合性 Stata 命令。
-它通过构建反事实分布 (Counterfactual Distribution) 来量化个体对税收、补贴、规制等断点政策的行为反应。
+它通过构建反事实分布来量化个体对税收、补贴、规制等断点政策的行为反应。
 
 {pstd}
-该命令的核心优势在于{bf:完全数据驱动 (Data-driven)}：它不依赖研究者的视觉判断来确定排除窗口和多项式阶数，
-而是采用迭代算法自动寻找统计上最优的参数组合，从而提高了研究的可复现性。
+该命令的核心优势在于{bf:完全数据驱动 (Data-driven)}与{bf:严谨的联合判定算法}：
+它不依赖研究者的视觉判断，也不采用分步简化的估计策略，而是通过双重迭代循环，同时确定统计上最优的多项式阶数和排除窗口范围。
 
 {pstd}
 此外，它支持{bf:结果变量分析 (Outcome Response)}，能够估算其他经济变量（如工时、税负、合规度）在断点处的平均因果变化。
@@ -81,21 +81,21 @@
 {bf:1. 窗口与阶数的联合判定 (Joint Determination)}
 
 {pstd}
-传统的群聚分析通常依赖目测来确定排除窗口 (Visual Inspection, Saez 2010)。
-{cmd:fbunch} 采用了基于 {bf:Bosch et al. (2020)} 的数据驱动算法，并进行了改进：
+传统的群聚分析通常依赖目测确定窗口，或先固定阶数再找窗口。
+{cmd:fbunch} 采用了更严谨的{bf:联合迭代算法}：
 
 {pstd}
-{ul:A. 窗口搜索 (Window Selection)}:
-程序从断点处开始向外迭代，检验观测频数与反事实拟合值之间的差异是否具有统计显著性。
-判据基于预测标准误 (Forecast Standard Error, stdf)。
-为了防止大样本下的过度扩张，程序引入了{bf:定向逻辑 (Directional Logic)}和{bf:容忍度 (Tolerance)}：
-仅当 Kink 出现凸起，或 Notch 出现理论预期的凸起/空洞，且相对偏差超过 {opt tolerance} 时，窗口才继续扩张。
+{ul:A. 阶数选择 (Degree Selection)}:
+对于每一个候选窗口，程序都会重新评估最优多项式阶数。
+所有选择标准 ({opt mse}, {opt aic}, {opt bic}) 均基于 {bf:5折交叉验证 (5-Fold CV)} 计算预测误差 (PRESS)。
+为了防止高阶过拟合，程序引入了{bf:肘部法则 (Elbow Rule)}：仅当高一阶模型使指标改善幅度超过 {opt improve} (默认 5%) 时，才选择更高的阶数。
 
 {pstd}
-{ul:B. 阶数选择 (Degree Selection)}:
-在每一个候选窗口下，程序都会重新评估最优多项式阶数。
-为了防止高阶过拟合 (Overfitting)，程序引入了{bf:肘部法则 (Elbow Rule)}：
-仅当高一阶模型使 AIC/BIC/MSE 的降低幅度超过 {opt improve} (默认 5%) 时，才选择更高的阶数。
+{ul:B. 窗口搜索 (Window Search)}:
+程序从断点处开始向外迭代，检验观测频数与反事实拟合值之间的差异。
+判定结合了{bf:统计显著性}（基于预测标准误 stdf）与{bf:经济显著性}（基于 {opt tolerance}，默认 2%）。
+同时引入了{bf:定向逻辑 (Directional Logic)}：仅当 Kink 出现凸起，或 Notch 出现理论预期的凸起/空洞时，窗口才继续扩张。
+{it:注意：每当窗口扩张一次，程序都会回到步骤 A 重新选择最优阶数，直到两者同时收敛。}
 
 {pstd}
 {bf:2. Notch 模型的积分约束 (Integration Constraint)}
@@ -110,31 +110,63 @@
 
 {pstd}
 {bf:标准化群聚量 (Standard b)} (Chetty et al., 2011):
+
+{p 8 8 2}
+b = B / ( h_0(0) )
 {p_end}
-{p 8 12 2}b = B / ( h_0(0) ){p_end}
-{pstd}表示过剩人群相当于反事实分布在断点处多少个分箱的高度。
+{p 8 8 2}
+表示过剩人群相当于反事实分布在断点处多少个分箱的高度。
+{p_end}
 
 {pstd}
 {bf:相对群聚量 (Relative b)}:
+
+{p 8 8 2}
+b_pct = B / ( Sum( C_hat_j ) ) * 100%
 {p_end}
-{p 8 12 2}b_pct = B / ( Sum( C_hat_j ) ) * 100%{p_end}
 
 {pstd}
 {bf:4. 结果变量因果效应 (Outcome Response)}
 
 {pstd}
-当指定 {opt outcome(y)} 时，程序计算平均结果变量的反事实分布 y_hat_j。
-{p_end}
+当指定 {opt outcome(y)} 时，程序旨在估计政策变动对结果变量 Y 的因果影响。
+程序首先对排除窗口以外的数据进行多项式拟合，得到每个分箱内 Y 的反事实均值 y_hat_j。
+随后，计算观测值与反事实在群聚窗口内的差异。
+
 {pstd}
-{bf:平均效应 (Average Change)}: 窗口内个体 Y 值的平均变化量 (LATE)。
+{bf:4.A. 平均效应 (Average Change)}
+
+{pmore}
+衡量窗口内个体的 Y 值相对于反事实情形的绝对变化量。
 {p_end}
-{p 8 12 2}Delta_Y_avg = E[Y|Window, Obs] - E[Y|Window, Counterfactual]{p_end}
+
+{p 8 8 2}
+Delta_Y_avg = Avg(Y_obs) - Avg(Y_cf)
+{p_end}
+{p 12 12 2}
+= [ Sum(C_j * y_j) / Sum(C_j) ] - [ Sum(C_hat_j * y_hat_j) / Sum(C_hat_j) ]
+{p_end}
+
+{p 8 8 2}
+其中：C_j 为实际频数，y_j 为实际均值；C_hat_j 为反事实频数，y_hat_j 为反事实均值。求和范围均为群聚窗口 [z_L, z_U]。
+{p_end}
+
+{pstd}
+{bf:4.B. 相对效应 (Relative Impact)}
+
+{pmore}
+衡量平均效应相对于反事实基准水平的百分比变化。
+{p_end}
+
+{p 8 8 2}
+Relative Impact = ( Delta_Y_avg / Avg(Y_cf) ) * 100%
+{p_end}
 
 {pstd}
 {bf:5. 标准误}
 
 {pstd}
-使用残差自助法 (Residual Bootstrap)。对非窗口区域的残差进行有放回重抽样，生成新的伪样本分布，并重新估计。
+使用{bf:残差自助法}对非窗口区域的残差进行有放回重抽样，生成新的伪样本分布，并重新估计。
 
 
 {marker examples}{...}
@@ -170,25 +202,25 @@
     {it:* 模拟选择效应：留在洞里的人 Y 值偏低}
     {stata "replace y_notch = y_notch - 200 if z_notch > 10000 & z_notch < 11500":. replace y_notch = y_notch - 200 if z_notch > 10000 & z_notch < 11500}
     
-    {it:* 4. 数据清洗}
+    {it:* 4. 数据清洗 (推荐步骤)}
     {stata "keep if z_kink > 0 & z_kink < 25000":. keep if z_kink > 0 & z_kink < 25000}
     {stata "keep if z_notch > 0 & z_notch < 25000":. keep if z_notch > 0 & z_notch < 25000}
     {hline}
 
 {pstd}
-{bf:示例 1：基础 Kink 分析 (使用交叉验证选阶数)}
+{bf:示例 1：基础 Kink 分析}
 {p_end}
-{phang2}{cmd:. fbunch z_kink, cutoff(10000) width(200) select(cv)}{p_end}
+{phang2}{cmd:. fbunch z_kink, cutoff(10000) }{p_end}
 
 {pstd}
 {bf:示例 2：包含结果变量分析 (Outcome Analysis)}
 {p_end}
-{phang2}{cmd:. fbunch z_kink, cutoff(10000) width(200) select(cv) outcome(y_kink)}{p_end}
+{phang2}{cmd:. fbunch z_kink, cutoff(10000) width(200) select(aic) improve(0.02) outcome(y_kink)}{p_end}
 
 {pstd}
 {bf:示例 3：Notch 分析 (强制 B=M 约束 + Bootstrap 标准误)}
 {p_end}
-{phang2}{cmd:. fbunch z_notch, cutoff(10000) model(notch) select(cv) constraint outcome(y_notch) reps(100)}{p_end}
+{phang2}{cmd:. fbunch z_notch, cutoff(10000) model(notch) select(mse) constraint outcome(y_notch) reps(500)}{p_end}
 
 
 {marker references}{...}
@@ -213,5 +245,6 @@ Saez, E. (2010). Do Taxpayers Bunch at Kink Points? {it:American Economic Journa
 {marker author}{...}
 {title:作者 Author}
 
-{pstd}Easton Y. Fu{p_end}
-{pstd}Email: easton.y.fu@gmail.com{p_end}
+{pstd}
+Easton Y. Fu (Email: {it:easton.y.fu@gmail.com})
+{p_end}
