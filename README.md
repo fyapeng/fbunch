@@ -17,7 +17,7 @@
 您可以直接通过 Stata 从 GitHub 安装此命令：
 
 ```stata
-net install fbunch, from("https://raw.githubusercontent.com/fyapeng/fbunch/main")
+net install fbunch, from("https://raw.githubusercontent.com/fyapeng/fbunch/main") replace
 ```
 
 或者，如果您已经下载了文件，请将 `fbunch.ado` 和 `fbunch.sthlp` 放置在您的 Stata 个人 ADO 目录中（通常是 `C:\Users\用户名\ado\personal\f\`）。
