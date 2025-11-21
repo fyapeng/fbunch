@@ -50,7 +50,9 @@ fbunch depvar, cutoff(#) [options]
 2.  **结果变量分析 (Outcome Response)**：
     为了避免因群聚导致的总人数变化干扰效应判断，本程序报告的是 **平均意向处理效应 (Intention to treat)**：
     
-     $$ \Delta \bar{Y} = Avg(Y_{obs}) - Avg(Y_{cf}) $$
+     $$
+     \Delta \bar{Y} = Avg(Y_{obs}) - Avg(Y_{cf}) 
+	 $$
     
     相对效应 (Relative Impact) 亦基于平均值计算。
 
