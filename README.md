@@ -64,6 +64,30 @@ fbunch depvar, cutoff(#) [options]
 fbunch z_kink, cutoff(10000) width(200) select(aic) improve(0.02) outcome(y_kink) reps(500)
 ```
 
+```text
+Auto-selected bin width: 200
+Running Bootstrap (500 reps)... 
+.......... Done.
+
+------------------------------------------------------------------------
+FBunch Results: 
+Model: KINK (LEFT)                          Total Obs:       198062
+------------------------------------------------------------------------
+Parameters:
+  Bin Width       :    200.00               Poly Deg   : 5 (aic)
+  Excluded Window : [   -200.0,    2800.0]
+------------------------------------------------------------------------
+Density Estimates:
+  Excess Mass (B)   :       245             (SE:     124.0)
+  Standard b (B/h0) :     0.071             (SE:     0.036)
+  Relative b (B/Sum):      7.09%            (SE:      3.59%)
+------------------------------------------------------------------------
+Outcome Analysis (y_kink) in Window:
+  Avg Change (Y)    :    16.951             (SE:     3.615)
+  Relative Impact   :      2.53%            (SE:      0.54%)
+------------------------------------------------------------------------
+```
+
 **输出结果可视化：**
 ![Kink Result](images/res_kink.png)
 
@@ -75,6 +99,34 @@ fbunch z_kink, cutoff(10000) width(200) select(aic) improve(0.02) outcome(y_kink
 ```stata
 * 使用 BIC 标准防止过拟合，开启 B=M 约束
 fbunch z_notch_L, cutoff(10000) model(notch) select(bic) reps(500) constraint outcome(y_notch_L) improve(0.02)
+```
+
+```text
+Auto-selected bin width: 238.26
+Running Bootstrap (500 reps)... 
+(file C:\Users\ENAN\AppData\Local\Temp\ST_2ad4_000005.tmp not found)
+.......... Done.
+
+------------------------------------------------------------------------
+FBunch Results: 
+Model: NOTCH (LEFT)                         Total Obs:       190350
+------------------------------------------------------------------------
+Parameters:
+  Bin Width       :    238.26               Poly Deg   : 7 (bic)
+  Excluded Window : [   -476.5,    1667.8]
+  Constraint      : On (B=M)
+------------------------------------------------------------------------
+Density Estimates:
+  Excess Mass (B)   :     17231             (SE:      86.3)
+  Standard b (B/h0) :     4.595             (SE:     0.023)
+  Relative b (B/Sum):    226.75%            (SE:      1.14%)
+  Net Balance (B-M) :        40             (SE:     231.6)
+  H0: B=M (p-value) :     0.861             (Not Reject H0)
+------------------------------------------------------------------------
+Outcome Analysis (y_notch_L) in Window:
+  Avg Change (Y)    :   -63.343             (SE:     0.965)
+  Relative Impact   :    -10.09%            (SE:      0.15%)
+------------------------------------------------------------------------
 ```
 
 **输出结果可视化：**
@@ -89,6 +141,34 @@ fbunch z_notch_L, cutoff(10000) model(notch) select(bic) reps(500) constraint ou
 * 指定 side(right)，使用 MSE 标准
 fbunch z_notch_R, cutoff(10000) model(notch) select(mse) side(right) ///
 	constraint outcome(y_notch_R) reps(500)
+```
+
+```text
+Auto-selected bin width: 238.4
+Running Bootstrap (500 reps)... 
+(file C:\Users\ENAN\AppData\Local\Temp\ST_2ad4_000005.tmp not found)
+.......... Done.
+
+------------------------------------------------------------------------
+FBunch Results: 
+Model: NOTCH (RIGHT)                        Total Obs:       190359
+------------------------------------------------------------------------
+Parameters:
+  Bin Width       :    238.40               Poly Deg   : 7 (mse)
+  Excluded Window : [  -2145.6,     476.8]
+  Constraint      : On (B=M)
+------------------------------------------------------------------------
+Density Estimates:
+  Excess Mass (B)   :     18776             (SE:      81.5)
+  Standard b (B/h0) :     5.001             (SE:     0.022)
+  Relative b (B/Sum):    253.87%            (SE:      1.10%)
+  Net Balance (B-M) :        27             (SE:     259.1)
+  H0: B=M (p-value) :     0.917             (Not Reject H0)
+------------------------------------------------------------------------
+Outcome Analysis (y_notch_R) in Window:
+  Avg Change (Y)    :    -4.109             (SE:     1.140)
+  Relative Impact   :     -0.74%            (SE:      0.20%)
+------------------------------------------------------------------------
 ```
 
 **输出结果可视化：**
