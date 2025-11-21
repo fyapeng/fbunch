@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 17.0  21Nov2025}{...}
+{* *! version 17.3  21Nov2025}{...}
 {vieweralsosee "reghdfe" "help reghdfe"}{...}
 {vieweralsosee "rdrobust" "help rdrobust"}{...}
 {viewerjumpto "语法 Syntax" "fbunch##syntax"}{...}
@@ -39,13 +39,14 @@
 {synopt :{opt d:egree(#)}}多项式阶数 (0=自动选择){p_end}
 {synopt :{opt maxdeg(#)}}自动选择时的最大阶数 (默认 7){p_end}
 {synopt :{opt sel:ect(string)}}阶数选择标准: {bf:mse} (默认), {bf:aic}, {bf:bic}。所有标准均基于 5折交叉验证计算。{p_end}
-{synopt :{opt imp:rove(#)}}阶数选择的“肘部法则”阈值 (默认 0.05，即提升需>5%)，如标准使用aic或bic可适当调低这一参数。{p_end}
+{synopt :{opt imp:rove(#)}}阶数选择的"肘部法则"阈值 (默认 0.05，即提升需>5%)，如标准使用aic或bic可适当调低这一参数。{p_end}
 {synopt :{opt win:dow(numlist)}}手动指定排除窗口，例如 {opt window(-500 500)}{p_end}
 {synopt :{opt tol:erance(#)}}窗口搜索的相对偏差容忍度 (默认 0.02){p_end}
 
-{syntab:Notch 约束}
-{synopt :{opt cons:traint}}强制执行 B=M 积分约束 (仅限 Notch 模型){p_end}
-{synopt :{opt search:range(#)}}B=M 约束时的最大搜索范围 (默认为自动){p_end}
+{syntab:积分约束与平衡}
+{synopt :{opt bal:ance(string)}}Kink 模型的积分约束调整: {bf:left} 或 {bf:right}。通过平移反事实分布使总人数守恒 (Chetty et al., 2011)。{p_end}
+{synopt :{opt cons:traint}}Notch 模型的积分约束: 强制执行 B=M (仅限 Notch 模型){p_end}
+{synopt :{opt search:range(#)}}Notch 约束时的最大搜索范围 (默认为自动){p_end}
 
 {syntab:因果推断}
 {synopt :{opt out:come(varname)}}指定结果变量，计算该变量在断点处的因果效应{p_end}
@@ -74,6 +75,23 @@
 此外，它支持{bf:结果变量分析 (Outcome Response)}，能够估算其他经济变量（如工时、税负、合规度）在断点处的平均因果变化。
 
 
+{marker options}{...}
+{title:选项 Options}
+
+{phang}
+{opt balance(string)} 指定 Kink 模型中反事实分布的调整方向，可选 {bf:left} 或 {bf:right}。
+在 Kink 场景下，由于个体的移动，观测分布的一侧通常被"压低"。该选项会迭代地向上平移反事实分布，直到观测总人数与反事实总人数相等。
+程序会报告 {bf:Adjustment Factor} (调整幅度)，表示反事实分布被抬高的百分比。
+
+{phang}
+{opt constraint} 仅适用于 Notch 模型。强制执行 B=M (Bunching mass = Missing mass) 约束。
+程序会自动搜索最优的排除窗口边界，使得群聚量与缺失量之差最小化。
+
+{phang}
+{opt outcome(varname)} 计算结果变量的因果效应。程序会基于反事实分布计算该变量在群聚窗口内的反事实均值，
+并报告平均效应 (Average Change) 和相对效应 (Relative Impact)。
+
+
 {marker methods}{...}
 {title:算法原理 Methods and Formulas}
 
@@ -95,15 +113,23 @@
 程序从断点处开始向外迭代，检验观测频数与反事实拟合值之间的差异。
 判定结合了{bf:统计显著性}（基于预测标准误 stdf）与{bf:经济显著性}（基于 {opt tolerance}，默认 2%）。
 同时引入了{bf:定向逻辑 (Directional Logic)}：仅当 Kink 出现凸起，或 Notch 出现理论预期的凸起/空洞时，窗口才继续扩张。
-{it:注意：每当窗口扩张一次，程序都会回到步骤 A 重新选择最优阶数，直到两者同时收敛。}
 
 {pstd}
-{bf:2. Notch 模型的积分约束 (Integration Constraint)}
+{bf:2. 积分约束 (Integration Constraint)}
 
 {pstd}
-对于 Notch 模型，理论要求群聚增加的人数 (B) 等于空洞减少的人数 (M)。
-若指定 {opt constraint}，程序将在统计确定的窗口基础上，进行全局网格搜索，
-寻找使 Net Balance (B-M) 最小化的窗口边界 (Kleven & Waseem, 2013)。
+群聚分析的一个核心假设是：个体的移动不会凭空消失 (Conservation of Mass)。
+
+{pstd}
+{ul:Kink 模型}: 使用 {opt balance(side)} 选项。
+由于 Kink 导致的反应是弥散的，观测分布通常低于真实的反事实分布。
+程序采用 Chetty et al. (2011) 的迭代算法，将反事实分布向上平移，直到总人数相等。
+输出结果中的 {bf:Adjustment Factor} 显示了平移的幅度（百分比）。幅度越小，结果越稳健。
+
+{pstd}
+{ul:Notch 模型}: 使用 {opt constraint} 选项。
+理论要求群聚增加的人数 (B) 等于空洞减少的人数 (M)。
+程序将在统计确定的窗口基础上，进行全局网格搜索，寻找使 Net Balance (B-M) 最小化的窗口边界 (Kleven & Waseem, 2013)。
 
 {pstd}
 {bf:3. 统计量计算}
@@ -134,7 +160,7 @@ b_pct = B / ( Sum( C_hat_j ) ) * 100%
 随后，计算观测值与反事实在群聚窗口内的差异。
 
 {pstd}
-{bf:4.A. 平均效应 (Average Change)}
+{bf:平均效应 (Average Change)}
 
 {pmore}
 衡量窗口内个体的 Y 值相对于反事实情形的绝对变化量。
@@ -147,12 +173,8 @@ Delta_Y_avg = Avg(Y_obs) - Avg(Y_cf)
 = [ Sum(C_j * y_j) / Sum(C_j) ] - [ Sum(C_hat_j * y_hat_j) / Sum(C_hat_j) ]
 {p_end}
 
-{p 8 8 2}
-其中：C_j 为实际频数，y_j 为实际均值；C_hat_j 为反事实频数，y_hat_j 为反事实均值。求和范围均为群聚窗口 [z_L, z_U]。
-{p_end}
-
 {pstd}
-{bf:4.B. 相对效应 (Relative Impact)}
+{bf:相对效应 (Relative Impact)}
 
 {pmore}
 衡量平均效应相对于反事实基准水平的百分比变化。
@@ -166,61 +188,74 @@ Relative Impact = ( Delta_Y_avg / Avg(Y_cf) ) * 100%
 {bf:5. 标准误}
 
 {pstd}
-使用{bf:残差自助法}对非窗口区域的残差进行有放回重抽样，生成新的伪样本分布，并重新估计。
+使用{bf:残差自助法 (Residual Bootstrap)}对非窗口区域的残差进行有放回重抽样，生成新的伪样本分布，并重新估计。
 
 
 {marker examples}{...}
 {title:示例 Examples}
 
 {pstd}
-为了演示命令功能，我们生成一份包含 Kink 和 Notch 特征的模拟数据。
-您可以点击下方蓝色的命令直接运行：
+为了演示命令的所有功能，我们需要先生成一份包含 Kink (右侧群聚) 和 Notch (左侧群聚) 特征的模拟数据。
+{p_end}
+{pstd}
+{it:提示：您可以点击下方蓝色的命令直接生成数据。}
 {p_end}
 
     {hline}
     {stata "clear all":. clear all}
     {stata "set seed 2025":. set seed 2025}
-    {stata "set obs 100000":. set obs 100000}
+    {stata "set obs 100000":. set obs 200000}
     
-    {it:* 1. 生成潜变量 (Z=收入, Y=纳税依从度)}
+    {it:* 1. 生成潜变量 (Z=收入, Y=能力)}
     {stata "gen z_star = exp(rnormal(9.3, 0.5))":. gen z_star = exp(rnormal(9.3, 0.5))}
     {stata "gen y_star = 100 + 0.05 * z_star + rnormal(0, 50)":. gen y_star = 100 + 0.05 * z_star + rnormal(0, 50)}
 
-    {it:* 2. 生成 Kink 数据 (Cutoff=10000)}
+    {it:* 2. 生成 Kink 数据 (补贴门槛：人们为了拿补贴，堆积在 10000 右侧)}
     {stata "gen z_kink = z_star":. gen z_kink = z_star}
     {stata "gen y_kink = y_star":. gen y_kink = y_star}
     {stata "replace z_kink = 10000 + (z_star - 10000)*0.6 if z_star > 10000":. replace z_kink = 10000 + (z_star - 10000)*0.6 if z_star > 10000}
     {stata "replace z_kink = z_kink + rnormal(0, 100)":. replace z_kink = z_kink + rnormal(0, 100)}
-    {it:* 模拟选择效应：Y值在断点处凸起}
     {stata "replace y_kink = y_kink + 150 if abs(z_kink - 10000) < 300":. replace y_kink = y_kink + 150 if abs(z_kink - 10000) < 300}
 
-    {it:* 3. 生成 Notch 数据 (Cutoff=10000, 左侧群聚)}
+    {it:* 3. 生成 Notch 数据 (社保断层：10000以上有空洞，人们逃离该区域，堆积在左侧)}
     {stata "gen z_notch = z_star":. gen z_notch = z_star}
     {stata "gen y_notch = y_star":. gen y_notch = y_star}
+    {it:* 构造左侧群聚，右侧空洞 (Dominated Region: 10000-11500)}
     {stata "replace z_notch = 10000 - runiform(0, 200) if z_star > 10000 & z_star < 11500":. replace z_notch = 10000 - runiform(0, 200) if z_star > 10000 & z_star < 11500}
     {stata "replace z_notch = z_notch + rnormal(0, 100)":. replace z_notch = z_notch + rnormal(0, 100)}
-    {it:* 模拟选择效应：留在洞里的人 Y 值偏低}
     {stata "replace y_notch = y_notch - 200 if z_notch > 10000 & z_notch < 11500":. replace y_notch = y_notch - 200 if z_notch > 10000 & z_notch < 11500}
     
-    {it:* 4. 数据清洗 (推荐步骤)}
+    {it:* 4. 数据清洗 (保留断点附近样本)}
     {stata "keep if z_kink > 0 & z_kink < 25000":. keep if z_kink > 0 & z_kink < 25000}
     {stata "keep if z_notch > 0 & z_notch < 25000":. keep if z_notch > 0 & z_notch < 25000}
     {hline}
 
 {pstd}
-{bf:示例 1：基础 Kink 分析}
+{bf:示例 1：指定拐点和群聚方向}
 {p_end}
-{phang2}{cmd:. fbunch z_kink, cutoff(10000) }{p_end}
+{pstd}
+{p_end}
+{phang2}{cmd:. fbunch z_kink, cutoff(10000) side(right)}{p_end}
 
 {pstd}
-{bf:示例 2：包含结果变量分析 (Outcome Analysis)}
+{bf:示例 2：加入积分约束并指定分仓宽度}
 {p_end}
-{phang2}{cmd:. fbunch z_kink, cutoff(10000) width(200) select(aic) improve(0.02) outcome(y_kink)}{p_end}
+{phang2}{cmd:. fbunch z_kink, cutoff(10000) side(right) balance(right) width(200)}{p_end}
 
 {pstd}
-{bf:示例 3：Notch 分析 (强制 B=M 约束 + Bootstrap 标准误)}
+{bf:示例 3：使用AIC准则并分析结果变量}
 {p_end}
-{phang2}{cmd:. fbunch z_notch, cutoff(10000) model(notch) select(mse) constraint outcome(y_notch) reps(500)}{p_end}
+{phang2}{cmd:. fbunch z_kink, cutoff(10000) side(right) balance(right) outcome(y_kink) select(aic)}{p_end}
+
+{pstd}
+{bf:示例 4：指定Notch并加入积分约束}
+{p_end}
+{phang2}{cmd:. fbunch z_notch, cutoff(10000) model(notch) constraint}{p_end}
+
+{pstd}
+{bf:示例 5：Bootstrap自助法估计标准误，保存数据，设定随机种子}
+{p_end}
+{phang2}{cmd:. fbunch z_notch, cutoff(10000) model(notch) constraint outcome(y_notch) reps(500) gen(sim_data) seed(123)}{p_end}
 
 
 {marker references}{...}
