@@ -24,7 +24,7 @@ program define gen_smooth_y
 end
 
 * ==============================================================================
-* 场景 1: Kink (拐点)
+* 场景 1: Kink (拐点，但右侧群聚)
 * ------------------------------------------------------------------------------
 * 故事背景：累进税率导致高收入者向断点处聚集。
 * 预期图形：密度在断点处凸起；结果变量(Y)在断点处也表现出正向偏离。
@@ -47,7 +47,7 @@ keep if z_kink > 0 & z_kink < 25000
 
 * >>> 运行 fbunch 估计 <<<
 * 使用 CV (交叉验证) 选择阶数，计算 Outcome 效应
-fbunch z_kink, cutoff(10000) width(200) select(aic) improve(0.02) outcome(y_kink) reps(500)
+fbunch z_kink, cutoff(10000) side(right)  width(200) select(aic) improve(0.02) outcome(y_kink) reps(500) balance(right)
 
 * 保存图片
 graph export "res_kink.png", replace
