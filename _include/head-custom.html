@@ -1,18 +1,26 @@
-<!-- 引入 MathJax 数学公式引擎 -->
+<!-- 强制加载 MathJax -->
 <script type="text/javascript" async
   src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML">
 </script>
 
-<!-- 配置 MathJax 识别 $ 符号 -->
 <script type="text/x-mathjax-config">
   MathJax.Hub.Config({
+    // 核心设置：告诉 MathJax 哪些符号是公式
     tex2jax: {
+      // 行内公式：识别 $...$ 和 \(...\)
       inlineMath: [['$','$'], ['\\(','\\)']],
+      // 块级公式：识别 $$...$$ 和 \[...\]
       displayMath: [['$$','$$'], ['\\[','\\]']],
+      // 允许通过 \$ 来输出真正的美元符号
       processEscapes: true,
-      processEnvironments: true
+      // 忽略某些标签内的公式（如代码块）
+      skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
     },
-    "HTML-CSS": { linebreaks: { automatic: true } },
+    // 样式设置
+    "HTML-CSS": { 
+      linebreaks: { automatic: true },
+      availableFonts: ["STIX","TeX"] 
+    },
     SVG: { linebreaks: { automatic: true } }
   });
 </script>
