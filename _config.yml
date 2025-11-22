@@ -1,0 +1,17 @@
+# 网页标题
+title: fbunch
+# 网页描述（显示在标题下方）
+description: 一个用来进行Bunching分析的Stata命令
+
+# --- 主题选择 ---
+# 方案A：Slate 主题（深色，看起来很像软件文档，推荐）
+theme: jekyll-theme-slate
+
+# 方案B：Cayman 主题（蓝白配色，清爽，适合长文）
+# theme: jekyll-theme-cayman
+
+# --- 设置 markdown 渲染引擎 ---
+markdown: kramdown
+kramdown:
+  input: GFM
+  math_engine: mathjax
