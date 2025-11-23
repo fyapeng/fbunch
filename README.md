@@ -42,6 +42,7 @@ fbunch depvar, cutoff(#) [options]
 | `improve(#)` | 阶数选择的“肘部法则”阈值 (默认 0.05)，防止高阶过拟合。 |
 | `balance(str)` | **Kink 专用**。指定 `left` 或 `right`。迭代调整反事实分布高度以满足积分约束。 |
 | `constraint` | **Notch 专用**。强制执行 B=M 积分约束，通过全局搜索寻找最优窗口。 |
+| `round(numlist)` | 控制整数效应。通过 `round(50 100 1000)` 来控制整数效应。 |
 | `outcome(var)` | 指定一个结果变量，计算该变量在断点处的**平均因果效应**。 |
 | `reps(#)` | Bootstrap 重抽样次数 (建议 500)，用于计算标准误。 |
 
