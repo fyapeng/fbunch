@@ -4,7 +4,11 @@ title: fbunch
 description: 一个用来进行Bunching分析的Stata命令
 
 # --- 主题选择 ---
-theme: jekyll-theme-cayman
+#theme: jekyll-theme-cayman
+remote_theme: pmarsceill/just-the-docs
+
+
+show_downloads: true
 
 # --- 设置 markdown 渲染引擎 ---
 markdown: kramdown
