@@ -1,23 +1,23 @@
 {smcl}
-{* *! version 17.3  21Nov2025}{...}
+{* *! version 2.0  23Nov2025}{...}
 {vieweralsosee "reghdfe" "help reghdfe"}{...}
 {vieweralsosee "rdrobust" "help rdrobust"}{...}
-{viewerjumpto "语法 Syntax" "fbunch##syntax"}{...}
-{viewerjumpto "描述 Description" "fbunch##description"}{...}
-{viewerjumpto "选项 Options" "fbunch##options"}{...}
-{viewerjumpto "算法原理 Methods" "fbunch##methods"}{...}
-{viewerjumpto "示例 Examples" "fbunch##examples"}{...}
-{viewerjumpto "参考文献 References" "fbunch##references"}{...}
-{viewerjumpto "作者 Author" "fbunch##author"}{...}
-{title:标题}
+{viewerjumpto "Syntax" "fbunch##syntax"}{...}
+{viewerjumpto "Description" "fbunch##description"}{...}
+{viewerjumpto "Options" "fbunch##options"}{...}
+{viewerjumpto "Methods and Formulas" "fbunch##methods"}{...}
+{viewerjumpto "Examples" "fbunch##examples"}{...}
+{viewerjumpto "References" "fbunch##references"}{...}
+{viewerjumpto "Author" "fbunch##author"}{...}
+{title:Title}
 
 {p2colset 5 18 20 2}{...}
-{p2col :{bf:fbunch} {hline 2}}数据驱动的群聚分析估计量 (Data-driven Bunching Estimator){p_end}
+{p2col :{bf:fbunch} {hline 2}}Data-driven bunching estimation{p_end}
 {p2colreset}{...}
 
 
 {marker syntax}{...}
-{title:语法 Syntax}
+{title:Syntax}
 
 {p 8 17 2}
 {cmd:fbunch}
@@ -26,240 +26,212 @@
 {opt c:utoff(#)}
 [{it:options}]
 
-{synoptset 22 tabbed}{...}
+{synoptset 28 tabbed}{...}
 {synopthdr}
 {synoptline}
-{syntab:基础模型}
-{synopt :{opt c:utoff(#)}}指定政策发生变化的断点/阈值 (必填){p_end}
-{synopt :{opt w:idth(#)}}指定分箱宽度 (默认基于 Freedman-Diaconis 准则自动计算){p_end}
-{synopt :{opt m:odel(string)}}模型类型: {bf:kink} (默认) 或 {bf:notch}{p_end}
-{synopt :{opt s:ide(string)}}群聚方向: {bf:left} (默认) 或 {bf:right}{p_end}
+{syntab:Model Specification}
+{synopt :{opt c:utoff(#)}}specify the policy threshold/cutoff point (required){p_end}
+{synopt :{opt w:idth(#)}}specify bin width; default is auto-calculated using the Freedman-Diaconis rule{p_end}
+{synopt :{opt m:odel(string)}}model type: {bf:kink} (default) or {bf:notch}{p_end}
+{synopt :{opt s:ide(string)}}direction of bunching: {bf:left} (default) or {bf:right}{p_end}
 
-{syntab:参数自动选择}
-{synopt :{opt d:egree(#)}}多项式阶数 (0=自动选择){p_end}
-{synopt :{opt maxdeg(#)}}自动选择时的最大阶数 (默认 7){p_end}
-{synopt :{opt sel:ect(string)}}阶数选择标准: {bf:mse} (默认), {bf:aic}, {bf:bic}。所有标准均基于 5折交叉验证计算。{p_end}
-{synopt :{opt imp:rove(#)}}阶数选择的"肘部法则"阈值 (默认 0.05，即提升需>5%)，如标准使用aic或bic可适当调低这一参数。{p_end}
-{synopt :{opt win:dow(numlist)}}手动指定排除窗口，例如 {opt window(-500 500)}{p_end}
-{synopt :{opt tol:erance(#)}}窗口搜索的相对偏差容忍度 (默认 0.02){p_end}
+{syntab:Selection & Correction}
+{synopt :{opt d:egree(#)}}polynomial degree (0 = auto-selection){p_end}
+{synopt :{opt maxdeg(#)}}maximum degree for auto-selection (default is 7){p_end}
+{synopt :{opt sel:ect(string)}}selection criterion: {bf:mse} (default), {bf:aic}, or {bf:bic}; based on 5-fold CV{p_end}
+{synopt :{opt imp:rove(#)}}threshold for the "elbow rule" in degree selection (default is 0.05){p_end}
+{synopt :{opt win:dow(numlist)}}manually specify the excluded window range, e.g., {opt window(-500 500)}{p_end}
+{synopt :{opt tol:erance(#)}}tolerance for window convergence (default is 0.02){p_end}
+{synopt :{opt r:ound(numlist)}}specify cycles for integer correction (e.g., 10 100 1000) to remove round-number bunching{p_end}
 
-{syntab:积分约束与平衡}
-{synopt :{opt bal:ance(string)}}Kink 模型的积分约束调整: {bf:left} 或 {bf:right}。通过平移反事实分布使总人数守恒 (Chetty et al., 2011)。{p_end}
-{synopt :{opt cons:traint}}Notch 模型的积分约束: 强制执行 B=M (仅限 Notch 模型){p_end}
-{synopt :{opt search:range(#)}}Notch 约束时的最大搜索范围 (默认为自动){p_end}
+{syntab:Constraint & Balance}
+{synopt :{opt bal:ance(string)}}integration constraint for kink model: {bf:left} or {bf:right}{p_end}
+{synopt :{opt cons:traint}}enforce the B=M constraint (notch model only){p_end}
+{synopt :{opt search:range(#)}}maximum search range for the vanishing point in notch models (default is auto){p_end}
 
-{syntab:因果推断}
-{synopt :{opt out:come(varname)}}指定结果变量，计算该变量在断点处的因果效应{p_end}
-{synopt :{opt r:eps(#)}}Bootstrap 重抽样次数 (推荐 500)，用于计算标准误{p_end}
-{synopt :{opt seed(#)}}设置随机数种子以复现 Bootstrap 结果{p_end}
+{syntab:Inference}
+{synopt :{opt out:come(varname)}}specify outcome variable for causal response analysis{p_end}
+{synopt :{opt r:eps(#)}}number of bootstrap replications for standard errors (recommended 500){p_end}
+{synopt :{opt seed(#)}}set random number seed for reproducibility{p_end}
 
-{syntab:输出与绘图}
-{synopt :{opt g:en(prefix)}}保存生成的反事实数据 (bin, freq, cf_freq 等){p_end}
-{synopt :{opt nop:lot}}禁止输出图形{p_end}
+{syntab:Output}
+{synopt :{opt g:en(prefix)}}save generated variables (bins, frequency, counterfactuals) with the specified prefix{p_end}
+{synopt :{opt nop:lot}}suppress graphical output{p_end}
 {synoptline}
 {p2colreset}{...}
 
 
 {marker description}{...}
-{title:描述 Description}
+{title:Description}
 
 {pstd}
-{cmd:fbunch} 是一个用于估计政策断点处群聚效应 (Bunching Estimation) 的综合性 Stata 命令。
-它通过构建反事实分布来量化个体对税收、补贴、规制等断点政策的行为反应。
+{cmd:fbunch} implements a data-driven estimator for bunching at policy thresholds (kinks and notches). 
+It constructs a counterfactual distribution to quantify behavioral responses to taxes, subsidies, or regulations.
 
 {pstd}
-该命令的核心优势在于{bf:完全数据驱动 (Data-driven)}与{bf:严谨的联合判定算法}：
-它不依赖研究者的视觉判断，也不采用分步简化的估计策略，而是通过双重迭代循环，同时确定统计上最优的多项式阶数和排除窗口范围。
+Unlike ad-hoc methods that rely on visual inspection, {cmd:fbunch} uses a rigorous {bf:joint determination algorithm}. 
+It employs a dual iterative loop to simultaneously determine the statistically optimal polynomial degree and the excluded window range.
 
 {pstd}
-此外，它支持{bf:结果变量分析 (Outcome Response)}，能够估算其他经济变量（如工时、税负、合规度）在断点处的平均因果变化。
+Key features include:
+{p_end}
+{phang2}* {bf:Integer Correction}: Controls for natural heaping at round numbers (e.g., multiples of 1000) to isolate policy effects.{p_end}
+{phang2}* {bf:Outcome Analysis}: Estimates the causal impact of the threshold on other economic variables (e.g., hours worked, compliance).{p_end}
 
 
 {marker options}{...}
-{title:选项 Options}
+{title:Options}
 
 {phang}
-{opt balance(string)} 指定 Kink 模型中反事实分布的调整方向，可选 {bf:left} 或 {bf:right}。
-在 Kink 场景下，由于个体的移动，观测分布的一侧通常被"压低"。该选项会迭代地向上平移反事实分布，直到观测总人数与反事实总人数相等。
-程序会报告 {bf:Adjustment Factor} (调整幅度)，表示反事实分布被抬高的百分比。
+{opt round(numlist)} specifies the cycles of integer effects to control for. 
+For example, if data naturally bunches at multiples of 1000, specify {opt round(1000)}. 
+This adds dummy variables for these multiples into the regression equation. 
+When enabled, the counterfactual distribution will follow the natural "saw-toothed" pattern of the data, ensuring that the estimated Excess Mass (B) captures only the policy response, not digit preference.
 
 {phang}
-{opt constraint} 仅适用于 Notch 模型。强制执行 B=M (Bunching mass = Missing mass) 约束。
-程序会自动搜索最优的排除窗口边界，使得群聚量与缺失量之差最小化。
+{opt balance(string)} specifies the direction to shift the counterfactual distribution for Kink models ({bf:left} or {bf:right}).
+Since individuals bunching at a kink point often come from one side of the distribution, this option iteratively shifts the counterfactual vertically until the total mass equals the observed mass (Chetty et al., 2011).
 
 {phang}
-{opt outcome(varname)} 计算结果变量的因果效应。程序会基于反事实分布计算该变量在群聚窗口内的反事实均值，
-并报告平均效应 (Average Change) 和相对效应 (Relative Impact)。
+{opt constraint} is for Notch models only. It enforces the "Bunching = Missing Mass" (B = M) constraint.
+The command automatically searches for the optimal boundary of the excluded window that minimizes the difference between the excess mass and the missing mass.
+
+{phang}
+{opt outcome(varname)} calculates the causal response of a result variable at the threshold.
+The program estimates the counterfactual mean of this variable within the bunching window and reports the {bf:Average Change} and {bf:Relative Impact}.
 
 
 {marker methods}{...}
-{title:算法原理 Methods and Formulas}
+{title:Methods and Formulas}
 
 {pstd}
-{bf:1. 窗口与阶数的联合判定 (Joint Determination)}
+{bf:1. Joint Determination of Window and Degree}
 
 {pstd}
-传统的群聚分析通常依赖目测确定窗口，或先固定阶数再找窗口。
-{cmd:fbunch} 采用了更严谨的{bf:联合迭代算法}：
+{cmd:fbunch} determines parameters endogenously rather than arbitrarily:
 
 {pstd}
-{ul:A. 阶数选择 (Degree Selection)}:
-对于每一个候选窗口，程序都会重新评估最优多项式阶数。
-所有选择标准 ({opt mse}, {opt aic}, {opt bic}) 均基于 {bf:5折交叉验证 (5-Fold CV)} 计算预测误差 (PRESS)。
-为了防止高阶过拟合，程序引入了{bf:肘部法则 (Elbow Rule)}：仅当高一阶模型使指标改善幅度超过 {opt improve} (默认 5%) 时，才选择更高的阶数。
+{ul:A. Degree Selection}: For every candidate window, the optimal polynomial degree is re-evaluated using {bf:5-Fold Cross-Validation}. 
+An {bf:Elbow Rule} is applied: a higher degree is selected only if it improves the information criterion (MSE/AIC/BIC) by more than the threshold specified in {opt improve()} (default 5%).
 
 {pstd}
-{ul:B. 窗口搜索 (Window Search)}:
-程序从断点处开始向外迭代，检验观测频数与反事实拟合值之间的差异。
-判定结合了{bf:统计显著性}（基于预测标准误 stdf）与{bf:经济显著性}（基于 {opt tolerance}，默认 2%）。
-同时引入了{bf:定向逻辑 (Directional Logic)}：仅当 Kink 出现凸起，或 Notch 出现理论预期的凸起/空洞时，窗口才继续扩张。
+{ul:B. Window Search}: The program expands the window outward from the cutoff. It tests the divergence between the observed frequency and the counterfactual fit, stopping when the deviation is no longer statistically or economically significant (controlled by {opt tolerance()}).
 
 {pstd}
-{bf:2. 积分约束 (Integration Constraint)}
+{bf:2. Integration Constraints}
 
 {pstd}
-群聚分析的一个核心假设是：个体的移动不会凭空消失 (Conservation of Mass)。
+{ul:Kink}: Uses the integration constraint method from Chetty et al. (2011). The counterfactual is shifted to satisfy the conservation of mass.
 
 {pstd}
-{ul:Kink 模型}: 使用 {opt balance(side)} 选项。
-由于 Kink 导致的反应是弥散的，观测分布通常低于真实的反事实分布。
-程序采用 Chetty et al. (2011) 的迭代算法，将反事实分布向上平移，直到总人数相等。
-输出结果中的 {bf:Adjustment Factor} 显示了平移的幅度（百分比）。幅度越小，结果越稳健。
+{ul:Notch}: Uses the convergence condition B = M (Kleven & Waseem, 2013). The program performs a grid search to find the vanishing point where the missing mass best accounts for the excess mass.
 
 {pstd}
-{ul:Notch 模型}: 使用 {opt constraint} 选项。
-理论要求群聚增加的人数 (B) 等于空洞减少的人数 (M)。
-程序将在统计确定的窗口基础上，进行全局网格搜索，寻找使 Net Balance (B-M) 最小化的窗口边界 (Kleven & Waseem, 2013)。
+{bf:3. Statistics}
 
 {pstd}
-{bf:3. 统计量计算}
+{bf:Standard b}: {it:b} = B / h_0(0). 
+(The excess mass normalized by the height of the counterfactual at the cutoff).
 
 {pstd}
-{bf:标准化群聚量 (Standard b)} (Chetty et al., 2011):
+{bf:Relative b}: {it:b_pct} = B / Total_Counterfactual_Mass * 100%.
+
+{pstd}
+{bf:4. Outcome Response}
+
+{pstd}
+When {opt outcome(y)} is specified:
+{p_end}
+{pstd}
+{bf:Average Change}: {it:Delta_Y} = Avg(Y_obs) - Avg(Y_cf)
+{p_end}
+{pstd}
+{bf:Relative Impact}: ({it:Delta_Y} / Avg(Y_cf)) * 100%
+
+{pstd}
+{bf:5. Integer Correction Model}
+
+{pstd}
+When {opt round(R)} is enabled, the estimation equation becomes:
 
 {p 8 8 2}
-b = B / ( h_0(0) )
-{p_end}
-{p 8 8 2}
-表示过剩人群相当于反事实分布在断点处多少个分箱的高度。
-{p_end}
+N_j = Sum( beta_i * Z_j^i ) + Sum( gamma * I(Z_j is multiple of R) ) + error
 
 {pstd}
-{bf:相对群聚量 (Relative b)}:
-
-{p 8 8 2}
-b_pct = B / ( Sum( C_hat_j ) ) * 100%
-{p_end}
-
-{pstd}
-{bf:4. 结果变量因果效应 (Outcome Response)}
-
-{pstd}
-当指定 {opt outcome(y)} 时，程序旨在估计政策变动对结果变量 Y 的因果影响。
-程序首先对排除窗口以外的数据进行多项式拟合，得到每个分箱内 Y 的反事实均值 y_hat_j。
-随后，计算观测值与反事实在群聚窗口内的差异。
-
-{pstd}
-{bf:平均效应 (Average Change)}
-
-{pmore}
-衡量窗口内个体的 Y 值相对于反事实情形的绝对变化量。
-{p_end}
-
-{p 8 8 2}
-Delta_Y_avg = Avg(Y_obs) - Avg(Y_cf)
-{p_end}
-{p 12 12 2}
-= [ Sum(C_j * y_j) / Sum(C_j) ] - [ Sum(C_hat_j * y_hat_j) / Sum(C_hat_j) ]
-{p_end}
-
-{pstd}
-{bf:相对效应 (Relative Impact)}
-
-{pmore}
-衡量平均效应相对于反事实基准水平的百分比变化。
-{p_end}
-
-{p 8 8 2}
-Relative Impact = ( Delta_Y_avg / Avg(Y_cf) ) * 100%
-{p_end}
-
-{pstd}
-{bf:5. 标准误}
-
-{pstd}
-使用{bf:残差自助法 (Residual Bootstrap)}对非窗口区域的残差进行有放回重抽样，生成新的伪样本分布，并重新估计。
-
+This allows the counterfactual {it:h_0} to absorb natural heaping at round numbers.
 
 {marker examples}{...}
-{title:示例 Examples}
+{title:Examples}
 
 {pstd}
-为了演示命令的所有功能，我们需要先生成一份包含 Kink (右侧群聚) 和 Notch (左侧群聚) 特征的模拟数据。
+To demonstrate the features, we first generate a simulated dataset containing both Kink (right-side bunching) and Notch (left-side bunching) behaviors.
 {p_end}
 {pstd}
-{it:提示：您可以点击下方蓝色的命令直接生成数据。}
+{it:Note: You can click the blue commands below to generate the data.}
 {p_end}
 
     {hline}
-    {stata "clear all":. clear all}
-    {stata "set seed 2025":. set seed 2025}
-    {stata "set obs 100000":. set obs 200000}
+    {phang2}{stata "clear all":. clear all}{p_end}
+    {phang2}{stata "set seed 2025":. set seed 2025}{p_end}
+    {phang2}{stata "set obs 200000":. set obs 200000}{p_end}
     
-    {it:* 1. 生成潜变量 (Z=收入, Y=能力)}
-    {stata "gen z_star = exp(rnormal(9.3, 0.5))":. gen z_star = exp(rnormal(9.3, 0.5))}
-    {stata "gen y_star = 100 + 0.05 * z_star + rnormal(0, 50)":. gen y_star = 100 + 0.05 * z_star + rnormal(0, 50)}
+    {phang2}{it:* 1. Generate latent variables (Z=Income, Y=Ability)}{p_end}
+    {phang2}{stata "gen z_star = exp(rnormal(9.3, 0.5))":. gen z_star = exp(rnormal(9.3, 0.5))}{p_end}
+    {phang2}{stata "gen y_star = 100 + 0.05 * z_star + rnormal(0, 50)":. gen y_star = 100 + 0.05 * z_star + rnormal(0, 50)}{p_end}
 
-    {it:* 2. 生成 Kink 数据 (补贴门槛：人们为了拿补贴，堆积在 10000 右侧)}
-    {stata "gen z_kink = z_star":. gen z_kink = z_star}
-    {stata "gen y_kink = y_star":. gen y_kink = y_star}
-    {stata "replace z_kink = 10000 + (z_star - 10000)*0.6 if z_star > 10000":. replace z_kink = 10000 + (z_star - 10000)*0.6 if z_star > 10000}
-    {stata "replace z_kink = z_kink + rnormal(0, 100)":. replace z_kink = z_kink + rnormal(0, 100)}
-    {stata "replace y_kink = y_kink + 150 if abs(z_kink - 10000) < 300":. replace y_kink = y_kink + 150 if abs(z_kink - 10000) < 300}
+    {phang2}{it:* 2. Generate Kink Data (Subsidy threshold at 10000)}{p_end}
+    {phang2}{stata "gen z_kink = z_star":. gen z_kink = z_star}{p_end}
+    {phang2}{stata "gen y_kink = y_star":. gen y_kink = y_star}{p_end}
+    {phang2}{stata "replace z_kink = 10000 + (z_star - 10000)*0.6 if z_star > 10000":. replace z_kink = 10000 + (z_star - 10000)*0.6 if z_star > 10000}{p_end}
+    {phang2}{stata "replace z_kink = z_kink + rnormal(0, 100)":. replace z_kink = z_kink + rnormal(0, 100)}{p_end}
+    {phang2}{stata "replace y_kink = y_kink + 150 if abs(z_kink - 10000) < 300":. replace y_kink = y_kink + 150 if abs(z_kink - 10000) < 300}{p_end}
 
-    {it:* 3. 生成 Notch 数据 (社保断层：10000以上有空洞，人们逃离该区域，堆积在左侧)}
-    {stata "gen z_notch = z_star":. gen z_notch = z_star}
-    {stata "gen y_notch = y_star":. gen y_notch = y_star}
-    {it:* 构造左侧群聚，右侧空洞 (Dominated Region: 10000-11500)}
-    {stata "replace z_notch = 10000 - runiform(0, 200) if z_star > 10000 & z_star < 11500":. replace z_notch = 10000 - runiform(0, 200) if z_star > 10000 & z_star < 11500}
-    {stata "replace z_notch = z_notch + rnormal(0, 100)":. replace z_notch = z_notch + rnormal(0, 100)}
-    {stata "replace y_notch = y_notch - 200 if z_notch > 10000 & z_notch < 11500":. replace y_notch = y_notch - 200 if z_notch > 10000 & z_notch < 11500}
+    {phang2}{it:* 3. Generate Notch Data (Benefits cutoff at 10000)}{p_end}
+    {phang2}{stata "gen z_notch = z_star":. gen z_notch = z_star}{p_end}
+    {phang2}{stata "gen y_notch = y_star":. gen y_notch = y_star}{p_end}
+    {phang2}{it:* Create left bunching and a hole on the right (Dominated Region)}{p_end}
+    {phang2}{stata "replace z_notch = 10000 - runiform(0, 200) if z_star > 10000 & z_star < 11500":. replace z_notch = 10000 - runiform(0, 200) if z_star > 10000 & z_star < 11500}{p_end}
+    {phang2}{stata "replace z_notch = z_notch + rnormal(0, 100)":. replace z_notch = z_notch + rnormal(0, 100)}{p_end}
+    {phang2}{stata "replace y_notch = y_notch - 200 if z_notch > 10000 & z_notch < 11500":. replace y_notch = y_notch - 200 if z_notch > 10000 & z_notch < 11500}{p_end}
     
-    {it:* 4. 数据清洗 (保留断点附近样本)}
-    {stata "keep if z_kink > 0 & z_kink < 25000":. keep if z_kink > 0 & z_kink < 25000}
-    {stata "keep if z_notch > 0 & z_notch < 25000":. keep if z_notch > 0 & z_notch < 25000}
+    {phang2}{it:* 4. Data Cleaning (Trim outliers)}{p_end}
+    {phang2}{stata "keep if z_kink > 0 & z_kink < 25000":. keep if z_kink > 0 & z_kink < 25000}{p_end}
+    {phang2}{stata "keep if z_notch > 0 & z_notch < 25000":. keep if z_notch > 0 & z_notch < 25000}{p_end}
     {hline}
 
 {pstd}
-{bf:示例 1：指定拐点和群聚方向}
-{p_end}
-{pstd}
+{bf:Example 1: Basic Kink Estimation}
 {p_end}
 {phang2}{cmd:. fbunch z_kink, cutoff(10000) side(right)}{p_end}
 
 {pstd}
-{bf:示例 2：加入积分约束并指定分仓宽度}
+{bf:Example 2: Kink with Integration Constraint and Manual Bin Width}
 {p_end}
 {phang2}{cmd:. fbunch z_kink, cutoff(10000) side(right) balance(right) width(200)}{p_end}
 
 {pstd}
-{bf:示例 3：使用AIC准则并分析结果变量}
+{bf:Example 3: Outcome Analysis using AIC Selection}
 {p_end}
 {phang2}{cmd:. fbunch z_kink, cutoff(10000) side(right) balance(right) outcome(y_kink) select(aic)}{p_end}
 
 {pstd}
-{bf:示例 4：指定Notch并加入积分约束}
+{bf:Example 4: Notch Estimation with B=M Constraint}
 {p_end}
 {phang2}{cmd:. fbunch z_notch, cutoff(10000) model(notch) constraint}{p_end}
 
 {pstd}
-{bf:示例 5：Bootstrap自助法估计标准误，保存数据，设定随机种子}
+{bf:Example 5: Bootstrap Standard Errors and Reproducibility}
 {p_end}
 {phang2}{cmd:. fbunch z_notch, cutoff(10000) model(notch) constraint outcome(y_notch) reps(500) gen(sim_data) seed(123)}{p_end}
 
+{pstd}
+{bf:Example 6: Integer Correction (Round Number Bunching)}
+{p_end}
+{phang2}{cmd:. fbunch z_notch, cutoff(10000) model(notch) constraint round(1000) seed(123)}{p_end}
+
 
 {marker references}{...}
-{title:参考文献 References}
+{title:References}
 
 {phang}
 Bosch, N., Dekker, V., & Strohmaier, K. (2020). A data-driven procedure to determine the bunching window: An application to the Netherlands. {it:International Tax and Public Finance}, 27, 951–979.
@@ -278,7 +250,7 @@ Saez, E. (2010). Do Taxpayers Bunch at Kink Points? {it:American Economic Journa
 
 
 {marker author}{...}
-{title:作者 Author}
+{title:Author}
 
 {pstd}
 Easton Y. Fu (Email: {it:easton.y.fu@gmail.com})
