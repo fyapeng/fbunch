@@ -65,6 +65,10 @@
 {title:Description}
 
 {pstd}
+Chinese help file is available via {stata "help fbunch_cn":fbunch_cn}
+{p_end}
+
+{pstd}
 {cmd:fbunch} implements a data-driven estimator for bunching at policy thresholds (kinks and notches). 
 It constructs a counterfactual distribution to quantify behavioral responses to taxes, subsidies, or regulations.
 
