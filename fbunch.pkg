@@ -9,7 +9,7 @@ d KW: notch
 d KW: public finance
 d KW: causal inference
 d
-d Requires: Stata version 2
+d Requires: Stata version 14.0
 d
 d Distribution-Date: 20251123
 d
@@ -20,3 +20,4 @@ f fbunch.ado
 f fbunch_cn.sthlp
 f fbunch.sthlp
 f fbunch_example.do
+
