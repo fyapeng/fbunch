@@ -22,6 +22,12 @@
 net install fbunch, from("https://raw.githubusercontent.com/fyapeng/fbunch/main") replace
 ```
 
+如果上述链接无法使用，可以使用以下链接：
+
+```stata
+net install fbunch, from("https://fyapeng.com/fbunch") replace
+```
+
 或者，如果您已经下载了文件，请将 `fbunch.ado` 和 `fbunch.sthlp` 放置在您的 Stata 个人 ADO 目录中（通常是 `C:\Users\用户名\ado\personal\f\`）。
 
 ## 语法 (Syntax)
